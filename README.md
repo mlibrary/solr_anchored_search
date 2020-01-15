@@ -49,9 +49,6 @@ phrase searches.
   <analyzer>
     <tokenizer class="solr.ICUTokenizerFactory"/>
     <filter class="solr.ICUFoldingFilterFactory"/>
-    <filter class="solr.SynonymGraphFilterFactory" synonyms="schema/nicknames.txt" 
-      ignoreCase="true" expand="true"/>
-    <filter class="solr.FlattenGraphFilterFactory"/>
     <filter class="edu.umich.lib.solr.FullyAnchoredSearchFilterFactory"/>
     <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
   </analyzer>
@@ -59,90 +56,7 @@ phrase searches.
 
 ```
 
-I would think most people wouldn't do synonym expansion for something that
-exists only for phrase searches; it's just there for the example.
-
-[ You can also imagine more going on here (character
-and pattern substitutions, maybe stemming or dealing with plurals, trimming
-punctuation, etc.), but
-this is good for an example. It all really depends on how you want your
-phrase searching to work. ] 
-
 ## How they work
-
-
-## Explanations, Caveats and Warnings
-
-### Don't use multi-word synonyms
-
-This would be, e.g., mapping "william" to "billy jack".
-
-That's good general advice with solr. Throwing a multi-word synonym in will
-screw up the counts and/or throw extra tokens around, which makes your
-(e)dismax _minmatch_ parameter go crazy and will break both of these 
-filters badly.
-
-### Beware the combinatorial explosion for FullyAnchoredSearch
-
-Using that filter only really makes sense on pretty-darn-small
-fields anyway, so it's probably not a problem. 
-
-### Always put FullyAnchoredSearch at/near the end of your analysis chain
-
-Remember: in the simple case, the output of `FullyAnchoredSerch` 
-is _a single token_. Anything you're trying to do to after that is likely
-to get very confused. 
-
-### Always end with RemoveDuplicatesTokenFilterFactory
-
-More general advice. Use `<filter class="solr.RemoveDuplicatesTokenFilterFactory"/>` to end
-any chain where you might have multiple tokens in one position. It costs
-essentially nothing to run, and it prevents you from 
-indexing things more than once. 
-
-  
-
-## Even more: multi-term awareness
-
-Some solr analyzers/filters produce
-token streams where more than one token can occupy the same location.
-These copies-at-the-same-position are called KEYWORDs (not to be confused
-with the KeywordTokenFactory). 
-
-The most obvious of these is the synonym filter, which is why it's 
-included above. Let's presume we're using a synonym file that associates names and 
-common nicknames and we're using synonym expansion. It might look
-like
-
-```
-michael,mike
-william,bill,will
-```
-
-We'd get the following position/token pairs for these queries,
-given that synonym file and the above filedType declaration.
-
-* Molly know Mary
-  * 1 / "molly"
-  * 2 / "knows"
-  * 3 / "mary"
-* William knows Mary
-  * 1 / "william"
-  * 1 / "bill"
-  * 1 / "will"
-  * 2 / "knows"
-  * 3 / "mary"
-* Mike knows Bill
-  * 1 / michael
-  * 1 / mike
-  * 2 / knows
-  * 3 / william
-  * 3 / bill
-  * 3 / will
-
-You can see that some tokens are "occupying the same space."
- 
-OK, so given that, how do these filters work?
 
 # FullyAnchoredSearchFilterFactory
 
@@ -156,26 +70,16 @@ underscore-separated single token for each valid combination.
 
 Most of the time this means that, e.g., _molly knows mary_ will just get
 turned into the single token `molly_knows_mary`. Once you start having
-multiple tokens at the same token position, things get weirder.
+multiple tokens at the same token position, things get weirder (see
+below)
 
-* Molly knows Mary
-  * molly_knows_mary
-* Molly knows Mike
-  * molly_knows_michael
-  * molly_knows_mike
-* Mike knows Bill
-  * michael_knows_william
-  * michael_knows_bill
-  * michael_knows_will  
-  * mike_knows_william
-  * mike_knows_bill
-  * mike_knows_will
+* William John Dueber -> william_john_dueber
+* John Dueber -> john_dueber
 
-Did you notice the combinatorial explosion there? Because you should have
-noticed the combinatorial explosion.
+While a "normal" phrase match on "John Dueber" would match those, the
+fully-anchored search doesn't (because the single token 'john_dueber'
+is not the same as the single token 'william_john_dueber'). 
 
-It's easy to see how his forces an exact match. If the user's searching for
-_"molly knows"_, well, `molly_knows` is not the same token as `molly_knows_mary`.
 
 # LeftAnchoredSearchFilterFactory
 
@@ -188,25 +92,61 @@ as expressed through the movies based on The Lord of the Rings."
 LeftAnchoredSearchFilterFactory can take a much easier approach and just
 append the position of the token to the token itself. 
 
-* Molly knows Mary
-  * 1 / molly1 
-  * 2 / knows2
-  * 3 / mary3
-* Molly knows Mike
-  * 1 / molly1 
-  * 2 / knows2 
-  * 3 / michael3 
-  * 3 / mike3
-* Mike knows Bill
-  * 1 / michael1
-  * 1 / mike1
-  * 2 / knows2
-  * 3 / william3
-  * 3 / bill3
-  * 3 / will3
-  
-Now, a phrase search _"Molly knows"_ will match the first two
-(both starting with the tokens `molly1` and `knows`), but 
-_"knows Mary"_ won't match anything, because it will become
-`knows1 mary2`
+* Lord of the Rings -> lord1 of2 the3 rings4
+* Reading the lord of the rings -> reading1 the2 lord3 of4 the5 rings6
 
+A phrase search on "lord of the rings" won't find the latter because
+the appended numbers don't match up.
+
+
+## Explanations, Caveats and Warnings
+
+### Don't use multi-word synonyms
+
+This would be, e.g., mapping "william" to "billy jack".
+
+That's good general advice with solr. Throwing a multi-word synonym in will
+screw up the counts and/or throw extra tokens around, which makes your
+(e)dismax _minmatch_ parameter go crazy and will break both of these 
+filters _badly_.
+
+### Beware the combinatorial explosion for FullyAnchoredSearch
+
+Both analyzers will deal with overlapping tokens -- tokens that "occupy the 
+same space." This is usually from a synonym file or a stemmer, where you 
+might get
+
+`Seeing and Believing`
+
+tokenized as
+
+`[[seeing, see], and, [believing, believe]]`
+
+with multiple tokens occupying the first and third positions.
+
+The FullyAnchoredSearch will create *all* these tokens for matching:
+
+* seeing_and_believing
+* see_and_believing
+* seeing_and_believe
+* see_and_believe
+
+Add a few more words with a few more varients and this can theoretically
+get out of hand. Realistically, though, an exactish match only really
+makes sense on pretty-darn-small fields anyway, so it's 
+probably not a problem. 
+
+### Always put FullyAnchoredSearch at/near the end of your analysis chain
+
+Remember: in the simple case, the output of `FullyAnchoredSerch` 
+is _a single token_. Any filter you try to apply afterwards to after that is likely
+to get very confused. 
+
+So, I recommend putting FullyAnchoredSearch second-to-last, right before you...
+
+### End your analysis chain with RemoveDuplicatesTokenFilterFactory
+
+This is just good general advice. Use `<filter class="solr.RemoveDuplicatesTokenFilterFactory"/>` to end
+any chain where you might have multiple tokens in one position. It costs
+essentially nothing to run, and it prevents you from 
+indexing things more than once. 
