@@ -45,7 +45,6 @@ public class LeftAnchoredSearchFilterTest {
     for (int i = 0; i < expected.size(); i++) {
       assertArrayEquals(expected.get(i), terms.get(i));
     }
-
   }
 
 }
