@@ -29,7 +29,13 @@ private static final Logger LOGGER = LoggerFactory.getLogger(FullyAnchoredSearch
   protected FullyAnchoredSearchFilter(TokenStream input) {
     super(input);
   }
-  
+
+  private void reset_class_variables() {
+    maximum_position = 0;
+    setup_done = false;
+    states = new ArrayList<>();
+    last_position = -1;
+  }
   // A little data class to hold a state and its computed position.
   class StatePos {
     public State state;
@@ -91,13 +97,16 @@ private static final Logger LOGGER = LoggerFactory.getLogger(FullyAnchoredSearch
       restoreState(sp.state);
 
       String t = myTermAttribute.toString();
+      String newtok;
       if (pos == maximum_position) {
-        myTermAttribute.setEmpty().append(t + pos.toString() + "00");
+        newtok = t + pos.toString() + "00";
       } else {
-        myTermAttribute.setEmpty().append(t + pos.toString());
+        newtok = t + pos.toString();
       }
+      myTermAttribute.setEmpty().append(newtok);
       return true;
     } else {
+      reset_class_variables();
       return false;
     }
   }
