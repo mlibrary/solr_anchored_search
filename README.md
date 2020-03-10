@@ -4,8 +4,8 @@
 restrict phrase search matches to either being fully-anchored (what in 
 the past I've called "exactish") or left-anchored.
 
-
-
+**It only makes sense to use these filters in fields that will be exclusively
+phrase-searched!!!** 
 
 ## Usage
 
@@ -33,16 +33,9 @@ A sample fully-anchored configuration for `schema.xml`
 ```xml
 
 <!-- Provide an "exactish" match. Phrases must match the entire target string
-exactly, in the correct order, but will ignore case and diacritics and 
-take advantage of synonym expansion 
+exactly, in the correct order, but will ignore case and diacritics. Obviously,
+other filters could be stuck in there as well.
 
-You should only do synonym expansion at query time, but I wanted
-to keep this simple and not repeat everything in separate index/query
-blocks.
-
-You can use the exact same chain but with 
-edu.umich.lib.solr.LeftyAnchoredSearchFilterFactory for "starts with"
-phrase searches.
 -->
 
 <fieldType name="text_exactish" class="solr.TextField" positionIncrementGap="1000">
@@ -56,48 +49,37 @@ phrase searches.
 
 ```
 
-## How they work
+You can use the exact same chain but with 
+edu.umich.lib.solr.LeftyAnchoredSearchFilterFactory for "starts with"
+phrase searches.
 
-# FullyAnchoredSearchFilterFactory
+<fieldType name="text_l" class="solr.TextField" positionIncrementGap="1000">
+  <analyzer>
+    <tokenizer class="solr.ICUTokenizerFactory"/>
+    <filter class="solr.ICUFoldingFilterFactory"/>
+    <filter class="edu.umich.lib.solr.LeftAnchoredSearchFilterFactory"/>
+    <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+  </analyzer>
+</fieldType>
+
+```
+
+## How they work
 
 **The problem being addressed**: We want to prefer (give more relevancy) to matches
 where, say, the title and the query string consist of the same tokens in the
 same order, give-or-take other transformations we make like lower casing or 
 whatever.
 
-`FullyAnchoredSearchFilterFactory` munges all the text given to it into one
-underscore-separated single token for each valid combination.
+To do this, each token gets a suffix of it's position in the token string. 
 
-Most of the time this means that, e.g., _molly knows mary_ will just get
-turned into the single token `molly_knows_mary`. Once you start having
-multiple tokens at the same token position, things get weirder (see
-below)
+For the Left anchor, that's it. 
 
-* William John Dueber -> william_john_dueber
-* John Dueber -> john_dueber
+For the fully anchored (exactish), the final token gets an extra '00' appended.
 
-While a "normal" phrase match on "John Dueber" would match those, the
-fully-anchored search doesn't (because the single token 'john_dueber'
-is not the same as the single token 'william_john_dueber'). 
-
-
-# LeftAnchoredSearchFilterFactory
-
-**The problem being addressed**: We want to prefer items where 
-the query string, when used as a phrases, matches the target string
-starting from the first token in each. The search "The Lord of the Rings"
-should match "The Lord of the Rings: The Two Towers" before "Blah blah blah
-as expressed through the movies based on The Lord of the Rings."
-
-LeftAnchoredSearchFilterFactory can take a much easier approach and just
-append the position of the token to the token itself. 
-
-* Lord of the Rings -> lord1 of2 the3 rings4
-* Reading the lord of the rings -> reading1 the2 lord3 of4 the5 rings6
-
-A phrase search on "lord of the rings" won't find the latter because
-the appended numbers don't match up.
-
+So _Lord of the Rings_ becomes:
+* left-anchor: `lord1 of2 the3 rings4`
+* fully-anchored: `lord1 of2 the3 rings400`
 
 ## Explanations, Caveats and Warnings
 
@@ -107,46 +89,20 @@ This would be, e.g., mapping "william" to "billy jack".
 
 That's good general advice with solr. Throwing a multi-word synonym in will
 screw up the counts and/or throw extra tokens around, which makes your
-(e)dismax _minmatch_ parameter go crazy and will break both of these 
-filters _badly_.
+(e)dismax _minmatch_ parameter go crazy and will probably break both of these 
+filters _badly_. More experimentation here is needed.
 
-### Beware the combinatorial explosion for FullyAnchoredSearch
+### Always put these filters at/near the end of your analysis chain
 
-Both analyzers will deal with overlapping tokens -- tokens that "occupy the 
-same space." This is usually from a synonym file or a stemmer, where you 
-might get
+Any filter you try to apply afterwards to after either of these will be dealing
+with tokens that have the extra digits attached, and they're probably not prepared
+to do that.
 
-`Seeing and Believing`
-
-tokenized as
-
-`[[seeing, see], and, [believing, believe]]`
-
-with multiple tokens occupying the first and third positions.
-
-The FullyAnchoredSearch will create *all* these tokens for matching:
-
-* seeing_and_believing
-* see_and_believing
-* seeing_and_believe
-* see_and_believe
-
-Add a few more words with a few more varients and this can theoretically
-get out of hand. Realistically, though, an exactish match only really
-makes sense on pretty-darn-small fields anyway, so it's 
-probably not a problem. 
-
-### Always put FullyAnchoredSearch at/near the end of your analysis chain
-
-Remember: in the simple case, the output of `FullyAnchoredSerch` 
-is _a single token_. Any filter you try to apply afterwards to after that is likely
-to get very confused. 
-
-So, I recommend putting FullyAnchoredSearch second-to-last, right before you...
+So, I recommend putting these filters second-to-last, right before you...
 
 ### End your analysis chain with RemoveDuplicatesTokenFilterFactory
 
 This is just good general advice. Use `<filter class="solr.RemoveDuplicatesTokenFilterFactory"/>` to end
 any chain where you might have multiple tokens in one position. It costs
 essentially nothing to run, and it prevents you from 
-indexing things more than once. 
+indexing overlapping, identical tokens more than once. 
