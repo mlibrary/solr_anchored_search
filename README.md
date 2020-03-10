@@ -1,4 +1,4 @@
-# solr_anchored_search -- Attempt decent left-anchored and fully-anchored phrase searches in solr
+# solr_anchored_search -- Attempt decent full-phrase-only and starts-with phrase searches in solr
 
 `solr_anchored_search` provides two analysis chain filters that try to 
 restrict phrase search matches to either being fully-anchored (what in 
@@ -6,6 +6,25 @@ the past I've called "exactish") or left-anchored.
 
 **It only makes sense to use these filters in fields that will be exclusively
 phrase-searched!!!** 
+
+## Wait, what's the problem?
+
+If someome types in keywords that correspond to an exact title, I'd like to boost the living daylights out of 
+things that match that title _exactly_. 
+
+If a user query is "gone with the wind," I want to have a field (`title_exact` or whatnot) that will give a boost _only_ 
+if the whole title exactly matches all of those words, in that order, treated as a phrase, with nothing is left over.
+
+Secondarily I want the same sort of abilty for a "starts with" phrase match.
+
+This might be used in an edismax query with `qf=all_the_keywords pf=title_exact^100 title_left^20 title^5`
+
+Solr doesn't make this easy. The edismax `pf` field will try all possible phrases (i.e., "gone with", "with the", "the wind", "gone with the", "with the wind", "gone with the wind"). Which is useful information (that's  why the raw `title` is included above), but there's no good way to give extra boosts to exact matches ("fully anchored") or starts-with ("left anchored").
+
+(note that for some configurations, Solr _can_ deal with wildcard-suffixed phrases like "gone with the "_*_, which could potentially 
+work for start-with matches, but with a bunch more messing around buildng a wildcard phrase query in your application)
+
+These filters try to make this possible in a way that breaks as little as possible.
 
 ## Usage
 
