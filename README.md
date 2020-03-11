@@ -42,7 +42,7 @@ other filters could be stuck in there as well.
   <analyzer>
     <tokenizer class="solr.ICUTokenizerFactory"/>
     <filter class="solr.ICUFoldingFilterFactory"/>
-    <filter class="edu.umich.lib.solr.FullyAnchoredSearchFilterFactory"/>
+    <filter class="edu.umich.lib.solr.ExactishPhraseMatchFilterFactory"/>
     <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
   </analyzer>
 </fieldType>

@@ -11,9 +11,9 @@ import java.util.*;
 
 import java.io.IOException;
 
-public class FullyAnchoredSearchFilter extends TokenFilter {
+public class ExactishPhraseMatchFilter extends TokenFilter {
 
-private static final Logger LOGGER = LoggerFactory.getLogger(FullyAnchoredSearchFilter.class);
+private static final Logger LOGGER = LoggerFactory.getLogger(ExactishPhraseMatchFilter.class);
 
   private final CharTermAttribute myTermAttribute =
     addAttribute(CharTermAttribute.class);
@@ -26,7 +26,7 @@ private static final Logger LOGGER = LoggerFactory.getLogger(FullyAnchoredSearch
   private Iterator<StatePos> statesIterator;
   private Integer last_position = -1;
 
-  protected FullyAnchoredSearchFilter(TokenStream input) {
+  protected ExactishPhraseMatchFilter(TokenStream input) {
     super(input);
   }
 

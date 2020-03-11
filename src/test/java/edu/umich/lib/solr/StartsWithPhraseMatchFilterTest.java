@@ -1,8 +1,5 @@
 package edu.umich.lib.solr;
 
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-
-import org.eclipse.jetty.util.IO;
 import org.junit.jupiter.api.Test;
 
 import static edu.umich.lib.solr.TokenStreamTestHelpers.get_nested_terms;
@@ -13,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class LeftAnchoredSearchFilterTest {
+public class StartsWithPhraseMatchFilterTest {
 
 
   @Test
@@ -21,7 +18,7 @@ public class LeftAnchoredSearchFilterTest {
     ManualTokenStream ts = new ManualTokenStream();
     ts.add("Bill", 1);
 
-    LeftAnchoredSearchFilter lasf = new LeftAnchoredSearchFilter(ts);
+    StartsWithPhraseMatchFilter lasf = new StartsWithPhraseMatchFilter(ts);
     assertArrayEquals(new String[]{"Bill1"}, get_nested_terms(lasf).get(0));
   }
 
@@ -39,7 +36,7 @@ public class LeftAnchoredSearchFilterTest {
     expected.add(new String[]{"John2", "James2"});
     expected.add(new String[]{"Dueber3"});
 
-    LeftAnchoredSearchFilter lasf = new LeftAnchoredSearchFilter(ts);
+    StartsWithPhraseMatchFilter lasf = new StartsWithPhraseMatchFilter(ts);
     List<String[]> terms = get_nested_terms(lasf);
 
     for (int i = 0; i < expected.size(); i++) {

@@ -3,23 +3,17 @@ package edu.umich.lib.solr;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.analysis.tokenattributes.PositionLengthAttribute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class LeftAnchoredSearchFilter extends TokenFilter {
+public class StartsWithPhraseMatchFilter extends TokenFilter {
 
     private Integer current_position = 0;
     private final PositionIncrementAttribute posIncrAtt = addAttribute(PositionIncrementAttribute.class);
     private final CharTermAttribute myTermAttribute = addAttribute(CharTermAttribute.class);
-    private final OffsetAttribute offsetAttr = addAttribute(OffsetAttribute.class);
-    private final PositionLengthAttribute posLengthAttr = addAttribute(PositionLengthAttribute.class);
 
-    protected LeftAnchoredSearchFilter(TokenStream input) {
+    protected StartsWithPhraseMatchFilter(TokenStream input) {
         super(input);
     }
 
