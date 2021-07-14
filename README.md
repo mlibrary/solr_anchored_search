@@ -42,10 +42,10 @@ anchored fields more than the unanchored field.
 So: if title, title_l, and title_e are unanchored, left-anchored, and fully-anchored
 (exactish) representations of the title, respectively, you might do:
 
-`
+```
 qf=title
 pf=title_e^20,title_l^10,title^5
-`
+```
 
 A sample fully-anchored configuration for `schema.xml`
 
@@ -72,6 +72,7 @@ You can use the exact same chain but with
 edu.umich.lib.solr.LeftyAnchoredSearchFilterFactory for "starts with"
 phrase searches.
 
+```
 <fieldType name="text_l" class="solr.TextField" positionIncrementGap="1000">
   <analyzer>
     <tokenizer class="solr.ICUTokenizerFactory"/>
@@ -80,7 +81,6 @@ phrase searches.
     <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
   </analyzer>
 </fieldType>
-
 ```
 
 ## How they work
