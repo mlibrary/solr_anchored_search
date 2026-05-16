@@ -1,3 +1,10 @@
+1.0beta 20260515
+Code quality improvements and Javadoc additions. Fix missing reset() override in
+LeftAnchoredSearchFilter (Lucene contract correctness). Fix FullyAnchoredSearchFilter
+to use true max position rather than last-element position. Remove dead fields, unused
+imports, and snake_case naming. Convert StatePos inner class to record. Unbox Integer
+to int throughout.
+
 0.3 20260515
 Migrate to Solr 10 compatibility. Bump Java compiler source/target to 21.
 Update solr-core and solr-analysis-extras to 10.0.0. Update slf4j-api to

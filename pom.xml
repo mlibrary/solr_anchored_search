@@ -6,7 +6,7 @@
 
     <groupId>edu.umich.lib</groupId>
     <artifactId>solr_anchored_search</artifactId>
-    <version>0.3</version>
+    <version>1.0beta</version>
 
     <build>
         <finalName>
