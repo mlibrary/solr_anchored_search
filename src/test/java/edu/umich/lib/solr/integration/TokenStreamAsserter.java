@@ -28,7 +28,18 @@ public final class TokenStreamAsserter {
      * @param term              the term text after analysis
      * @param positionIncrement the position increment relative to the previous token
      */
-    public record TokenData(String term, int positionIncrement) {
+    public static final class TokenData {
+        private final String term;
+        private final int positionIncrement;
+
+        public TokenData(String term, int positionIncrement) {
+            this.term = term;
+            this.positionIncrement = positionIncrement;
+        }
+
+        public String term() { return term; }
+        public int positionIncrement() { return positionIncrement; }
+
         @Override
         public String toString() {
             return "TokenData{term='" + term + "', posIncr=" + positionIncrement + "}";
@@ -95,7 +106,7 @@ public final class TokenStreamAsserter {
         assertEquals(
                 Arrays.asList(expectedTerms),
                 actualTerms,
-                "Expected terms %s but got %s".formatted(
+                String.format("Expected terms %s but got %s",
                         Arrays.toString(expectedTerms), actualTerms));
     }
 
@@ -114,7 +125,7 @@ public final class TokenStreamAsserter {
             assertEquals(
                     expectedIncrements[idx],
                     actual.get(idx).positionIncrement(),
-                    "Position increment mismatch at token %d ('%s')".formatted(idx, actual.get(idx).term()));
+                    String.format("Position increment mismatch at token %d ('%s')", idx, actual.get(idx).term()));
         }
     }
 

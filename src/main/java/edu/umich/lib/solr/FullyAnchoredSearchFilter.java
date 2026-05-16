@@ -64,7 +64,14 @@ public class FullyAnchoredSearchFilter extends TokenFilter {
     private Iterator<StatePos> statesIterator;
 
     /** Holds a captured token state together with its computed 1-based position. */
-    record StatePos(State state, int position) {}
+    private static final class StatePos {
+        final State state;
+        final int position;
+        StatePos(State state, int position) {
+            this.state = state;
+            this.position = position;
+        }
+    }
 
     /** @param input the upstream token stream */
     public FullyAnchoredSearchFilter(TokenStream input) {
@@ -97,7 +104,7 @@ public class FullyAnchoredSearchFilter extends TokenFilter {
 
     /** Returns the maximum position across all captured states. */
     private int finalPosition(List<StatePos> statePoses) {
-        return statePoses.stream().mapToInt(StatePos::position).max().orElse(0);
+        return statePoses.stream().mapToInt(sp -> sp.position).max().orElse(0);
     }
 
     /**
@@ -127,13 +134,13 @@ public class FullyAnchoredSearchFilter extends TokenFilter {
         }
 
         StatePos sp = statesIterator.next();
-        restoreState(sp.state());
+        restoreState(sp.state);
         String term = termAttr.toString();
 
-        if (sp.position() == maximumPosition) {
-            termAttr.setEmpty().append(term).append(String.valueOf(sp.position())).append("00");
+        if (sp.position == maximumPosition) {
+            termAttr.setEmpty().append(term).append(String.valueOf(sp.position)).append("00");
         } else {
-            termAttr.setEmpty().append(term).append(String.valueOf(sp.position()));
+            termAttr.setEmpty().append(term).append(String.valueOf(sp.position));
         }
         return true;
     }
