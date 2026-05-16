@@ -19,7 +19,7 @@ public class LeftAnchoredSearchFilter extends TokenFilter {
     private final OffsetAttribute offsetAttr = addAttribute(OffsetAttribute.class);
     private final PositionLengthAttribute posLengthAttr = addAttribute(PositionLengthAttribute.class);
 
-    protected LeftAnchoredSearchFilter(TokenStream input) {
+    public LeftAnchoredSearchFilter(TokenStream input) {
         super(input);
     }
 

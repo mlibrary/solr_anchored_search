@@ -33,6 +33,13 @@ public class ManualTokenStream extends TokenStream {
     return this;
   }
 
+  @Override
+  public void reset() throws IOException {
+    super.reset();
+    iter = null;
+    currentTokenPosition = 0;
+  }
+
 
   @Override
   final public boolean incrementToken() throws IOException {

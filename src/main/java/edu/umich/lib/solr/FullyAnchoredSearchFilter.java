@@ -26,7 +26,7 @@ private static final Logger LOGGER = LoggerFactory.getLogger(FullyAnchoredSearch
   private Iterator<StatePos> statesIterator;
   private Integer last_position = -1;
 
-  protected FullyAnchoredSearchFilter(TokenStream input) {
+  public FullyAnchoredSearchFilter(TokenStream input) {
     super(input);
   }
 

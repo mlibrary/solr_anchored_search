@@ -1,5 +1,7 @@
 # solr_anchored_search -- Attempt decent full-phrase-only and starts-with phrase searches in solr
 
+**Compatibility:** Solr 10.x · Java 21+
+
 `solr_anchored_search` provides two analysis chain filters that try to 
 restrict phrase search matches to either being fully-anchored (what in 
 the past I've called "exactish") or left-anchored.

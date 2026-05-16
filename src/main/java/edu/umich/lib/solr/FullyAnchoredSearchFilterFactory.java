@@ -1,44 +1,52 @@
 package edu.umich.lib.solr;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.util.TokenFilterFactory;
+import org.apache.lucene.analysis.TokenFilterFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Munge the first token in the token stream (on query and index)
- * so any phrase match has to be anchored to the left.
+ * Factory for {@link FullyAnchoredSearchFilter}.
  *
- * Factory for {@link FullyAnchoredSearchFilter}-s. When added to the analysis
- * chain, it will cause phrase matches to the field to only match
- * if they start at the first token.
+ * <p>When added to a field type's analysis chain (on both index and query),
+ * phrase queries against that field will only match if they span the entire
+ * field value — i.e. the query must be left-anchored AND right-anchored.
  *
- * NOTE that this actually changes the text of the first token(s), so
- * fields that include this filter are NOT suitable for generic searches.
+ * <p><strong>Note:</strong> this filter rewrites token text, so fields that
+ * include it are not suitable for generic keyword search.
  *
- * Example:
- *
- *     &lt;fieldType name="text_fullyanchored" class="solr.TextField"&gt;
- *         &lt;analyzer&gt;
- *              &lt;tokenizer class="solr.ICUTokenizerFactory"/&gt;
- *              &lt;filter class="solr.ICUFoldingFilterFactory"/&gt;
- *              &lt;filter class="edu.umich.lib.solr_fiilters.FullyAnchoredSearchFilterFactory"/&gt;
- *         &lt;/analyzer&gt;
- *     &lt;/fieldType&gt;
+ * <h2>Schema example</h2>
+ * <pre>{@code
+ * <fieldType name="text_fullyanchored" class="solr.TextField">
+ *   <analyzer>
+ *     <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+ *     <filter class="solr.ICUFoldingFilterFactory"/>
+ *     <filter class="fullyAnchoredSearch"/>
+ *   </analyzer>
+ * </fieldType>
+ * }</pre>
  */
 public class FullyAnchoredSearchFilterFactory extends TokenFilterFactory {
-  public FullyAnchoredSearchFilterFactory(Map<String, String> aMap) {
-      super(aMap);
-  }
 
-  public FullyAnchoredSearchFilterFactory() {
-    this(new HashMap<String, String>());
-  }
+    /** SPI name used in schema.xml and for ServiceLoader registration. */
+    public static final String NAME = "fullyAnchoredSearch";
 
-  @Override
-    public FullyAnchoredSearchFilter create(TokenStream aTokenStream) {
-      return new FullyAnchoredSearchFilter(aTokenStream);
-  }
+    /**
+     * No-arg constructor required by {@link java.util.ServiceLoader}.
+     * Direct instantiation without a configuration map is not supported.
+     */
+    public FullyAnchoredSearchFilterFactory() {
+        throw new UnsupportedOperationException(
+                "Use FullyAnchoredSearchFilterFactory(Map<String,String>) instead");
+    }
 
+    /** Creates a factory pre-configured with {@code args}. */
+    public FullyAnchoredSearchFilterFactory(Map<String, String> args) {
+        super(args);
+    }
+
+    @Override
+    public FullyAnchoredSearchFilter create(TokenStream input) {
+        return new FullyAnchoredSearchFilter(input);
+    }
 }

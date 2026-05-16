@@ -2,7 +2,6 @@ package edu.umich.lib.solr;
 
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
-import org.eclipse.jetty.util.IO;
 import org.junit.jupiter.api.Test;
 
 import static edu.umich.lib.solr.TokenStreamTestHelpers.get_nested_terms;

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Minimal solrconfig.xml for integration tests.
+  Uses the ClassicIndexSchemaFactory so schema.xml is authoritative
+  rather than the managed-schema approach.
+-->
+<config>
+  <luceneMatchVersion>10.0.0</luceneMatchVersion>
+
+  <!-- Use classic (explicit) schema loading, not managed schema -->
+  <schemaFactory class="ClassicIndexSchemaFactory"/>
+
+  <requestHandler name="/select" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+    </lst>
+  </requestHandler>
+
+  <requestHandler name="/update" class="solr.UpdateRequestHandler"/>
+
+  <!-- Analysis endpoint: lets tests call /analysis/field to inspect tokenisation -->
+  <requestHandler name="/analysis/field" class="solr.FieldAnalysisRequestHandler"/>
+
+</config>

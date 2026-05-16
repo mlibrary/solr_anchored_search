@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Test schema exercising both anchored-search filter factories.
+
+  LeftAnchoredSearchFilterFactory  (NAME = "leftAnchoredSearch")
+    Appends the 1-based token position to every term.
+    "Bill Dueber" → [Bill1, Dueber2]
+    Phrase matches are left-anchored: the query must start at position 1.
+
+  FullyAnchoredSearchFilterFactory (NAME = "fullyAnchoredSearch")
+    Like LeftAnchored but also appends "00" to the last token.
+    "Bill Dueber" → [Bill1, Dueber200]
+    Phrase matches must span the whole field value.
+
+  Both factories are referenced here by their fully-qualified class name
+  so the schema works before the META-INF/services SPI file is in place.
+  Once the SPI file exists, the short NAME aliases can be used instead.
+-->
+<schema name="anchored-search-test" version="1.6">
+
+  <!-- ================================================================
+       Field types
+       ================================================================ -->
+
+  <fieldType name="string" class="solr.StrField" sortMissingLast="true"/>
+
+  <fieldType name="text_leftanchored" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      <!-- Use the fully-qualified name so this works before Stage 2 SPI file -->
+      <filter class="edu.umich.lib.solr.LeftAnchoredSearchFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <fieldType name="text_fullyanchored" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      <filter class="edu.umich.lib.solr.FullyAnchoredSearchFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- ================================================================
+       Fields
+       ================================================================ -->
+
+  <field name="id"          type="string"           indexed="true"  stored="true" required="true"/>
+  <field name="title_left"  type="text_leftanchored" indexed="true" stored="true"/>
+  <field name="title_full"  type="text_fullyanchored" indexed="true" stored="true"/>
+
+  <uniqueKey>id</uniqueKey>
+
+</schema>

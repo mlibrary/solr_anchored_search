@@ -6,7 +6,7 @@
 
     <groupId>edu.umich.lib</groupId>
     <artifactId>solr_anchored_search</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
 
     <build>
         <finalName>
@@ -15,19 +15,67 @@
 
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
+
+        <plugins>
+            <!-- Run *Test.java unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Run *IT.java integration tests (requires a running build artifact) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     <!-- use, e.g. mvn package -Dsolr.version=8.2.0 to change -->
     <properties>
-        <solr.version>6.6.6</solr.version>
+        <solr.version>10.0.0</solr.version>
 
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
     </properties>
 
 
     <dependencies>
+        <!-- Explicitly declare lucene-core at compile scope.
+             solr-core:10.0.0 has a broken POM (missing jackson BOM versions)
+             which causes Maven to downgrade transitive lucene deps to 'runtime'. -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>10.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analysis-common</artifactId>
+            <version>10.3.2</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-core</artifactId>
@@ -37,7 +85,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
+            <version>2.0.17</version>
         </dependency>
 
         <dependency>
@@ -49,7 +97,15 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.5.2</version>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- SolrJ client (SolrQuery, SolrInputDocument, etc.) needed for SolrEmbeddedIT -->
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+            <version>${solr.version}</version>
             <scope>test</scope>
         </dependency>
 
